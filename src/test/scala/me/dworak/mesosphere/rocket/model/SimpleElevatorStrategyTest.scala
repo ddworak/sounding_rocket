@@ -1,7 +1,7 @@
 package me.dworak.mesosphere.rocket.model
 
 import me.dworak.mesosphere.rocket.ElevatorFixture
-import me.dworak.mesosphere.rocket.model.Direction.{Open, Up, Waiting}
+import me.dworak.mesosphere.rocket.model.Direction.{Down, Open, Up, Waiting}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -57,6 +57,15 @@ class SimpleElevatorStrategyTest extends FlatSpec with Matchers with Eventually 
       assigned should not be ElevatorId(1)
     }
 
+  }
+
+  it should "prefer piggybacking" in new ElevatorFixture {
+    system.update(ElevatorStatus(ElevatorId(0), Position(FloorId(3), Ticks.Zero, Waiting), immutable.SortedSet.empty))
+    system.update(ElevatorStatus(ElevatorId(1), Position(FloorId(3), Ticks.Zero, Up), immutable.SortedSet.empty))
+    system.update(ElevatorStatus(ElevatorId(2), Position(FloorId(0), Ticks.Zero, Up), immutable.SortedSet(FloorId(3))))
+    system.update(ElevatorStatus(ElevatorId(3), Position(FloorId(1), Ticks.Zero, Down), immutable.SortedSet(FloorId(0))))
+
+    system.pickup(FloorId(2), true) shouldBe ElevatorId(2)
   }
 
 

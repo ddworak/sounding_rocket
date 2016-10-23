@@ -18,6 +18,12 @@ class ElevatorSimulationTest extends FlatSpec with Matchers {
 
   }
 
+  it should "update status on pickup request" in new ElevatorFixture {
+    assume(!system.status().exists { case (id, status) => status.destinationFloors.nonEmpty })
+    system.pickup(FloorId(2), true)
+    system.status().count { case (id, status) => status.destinationFloors.nonEmpty } shouldBe 1
+  }
+
   it should "open and close the door after assumed time" in new ElevatorFixture {
     val newStatus = ElevatorStatus(ElevatorId(0), Position(FloorId(0), Ticks(0), Waiting), SortedSet(FloorId(0)))
     system.update(newStatus)
