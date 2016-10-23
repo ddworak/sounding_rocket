@@ -12,7 +12,7 @@ class SimpleElevatorStrategyTest extends FlatSpec with Matchers with Eventually 
 
   import scala.concurrent.duration._
 
-  implicit val config = PatienceConfig(1.second, 1.seconds)
+  implicit val config = PatienceConfig(2.seconds, 1.seconds)
 
   "SimpleElevatorStrategy" should "pick a random elevator" in new ElevatorFixture {
 
@@ -40,7 +40,9 @@ class SimpleElevatorStrategyTest extends FlatSpec with Matchers with Eventually 
 
     eventually {
       system.step()
-      system.status(id).get.destinationFloors shouldBe immutable.SortedSet.empty[FloorId]
+      val status = system.status(id).get
+      status.destinationFloors shouldBe immutable.SortedSet.empty[FloorId]
+      system.status(id).get.position.direction shouldBe Waiting
     }
   }
 
