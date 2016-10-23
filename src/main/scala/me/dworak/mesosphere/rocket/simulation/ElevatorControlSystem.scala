@@ -59,13 +59,13 @@ class ElevatorSimulation(floors: Range)(implicit timeAssumption: TimeAssumption,
       //reached a floor => open the door or just update position
       case Position(floor, offset, direction@(Up | Down))
         if offset + 1 == timeAssumption.ticksPerFloor && floors.contains((floor + direction.floorValueDifference).value) =>
-        val leftDestinations = current.destinationFloors - floor
         val newFloor = floor + direction.floorValueDifference
+        val leftDestinations = current.destinationFloors - newFloor
         current.copy(
           position = current.position.copy(
             newFloor,
             Ticks.Zero,
-            if (current.destinationFloors.contains(floor)) Open else elevatorStrategy.direction(leftDestinations, newFloor, direction)
+            if (current.destinationFloors.contains(newFloor)) Open else elevatorStrategy.direction(leftDestinations, newFloor, direction)
           ),
           destinationFloors = leftDestinations
         )

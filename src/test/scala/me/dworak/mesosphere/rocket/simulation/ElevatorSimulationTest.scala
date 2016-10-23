@@ -18,13 +18,25 @@ class ElevatorSimulationTest extends FlatSpec with Matchers {
 
   }
 
-  it should "open and close the door" in new ElevatorsFixture {
+  it should "open and close the door after assumed time" in new ElevatorsFixture {
     val newStatus = ElevatorStatus(ElevatorId(0), Position(FloorId(0), Ticks(0), Waiting), SortedSet(FloorId(0)))
     system.update(newStatus)
     system.step()
     system.status(newStatus.elevatorId).get.position.direction shouldBe Open
-    system.step()
-    system.step()
+    (0 until timeAssumption.ticksOpen.value).foreach(_ => system.step())
     system.status(newStatus.elevatorId).get.position.direction should not be Open
+  }
+
+  it should "visit all set floors in estimated ticks for simple scenario" in new ElevatorsFixture {
+    val newStatus = ElevatorStatus(ElevatorId(0), Position(FloorId(0), Ticks(0), Waiting), SortedSet(FloorId(0), FloorId(2), FloorId(5), FloorId(10)))
+    system.update(newStatus)
+    var i = 0
+    while (system.status(newStatus.elevatorId).get.destinationFloors.nonEmpty) {
+      i += 1
+      system.step()
+    }
+    val perFloor = timeAssumption.ticksPerFloor.value
+    val perOpen = timeAssumption.ticksOpen.value
+    i shouldBe 1 + perOpen + 2 * perFloor + perOpen + 3 * perFloor + perOpen + 5 * perFloor
   }
 }
