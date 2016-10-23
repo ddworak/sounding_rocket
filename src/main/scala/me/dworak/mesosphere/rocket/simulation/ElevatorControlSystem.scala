@@ -53,16 +53,28 @@ class ElevatorSimulation(implicit timeAssumption: TimeAssumption, elevatorStrate
   private def nextStatus(current: ElevatorStatus)(implicit timeAssumption: TimeAssumption): ElevatorStatus = {
     import me.dworak.mesosphere.rocket.model.Direction._
 
-    if (current.destinationFloors.isEmpty) current.copy(position = current.position.copy(offset = Ticks.Zero, direction = Waiting))
-    else current.position match {
+    current.position match {
+      //reached a floor
       case Position(floor, offset, direction@(Up | Down)) if offset + 1 == timeAssumption.ticksPerFloor =>
-        current.copy(position = current.position.copy(floor + direction.floorValueDifference, Ticks.Zero, elevatorStrategy.direction(current.destinationFloors - floor, direction)))
+        val leftDestinations = current.destinationFloors - floor
+        val newFloor = floor + direction.floorValueDifference
+        current.copy(
+          position = current.position.copy(
+            newFloor,
+            Ticks.Zero,
+            if (current.destinationFloors.contains(floor)) Open else elevatorStrategy.direction(leftDestinations, newFloor, direction)
+          ),
+          destinationFloors = leftDestinations
+        )
+      //closed the door
       case Position(floor, offset, Open) if offset + 1 == timeAssumption.ticksOpen =>
-        current.copy(position = current.position.copy(floor, Ticks.Zero, elevatorStrategy.direction(current.destinationFloors, Open)))
+        current.copy(position = current.position.copy(floor, Ticks.Zero, elevatorStrategy.direction(current.destinationFloors, floor, Open)))
+      //no state change - just time
       case Position(_, offset, Up | Down | Open) =>
         current.copy(position = current.position.copy(offset = offset + 1))
-      case Position(_, _, Waiting) => //destinationFloors non-empty
-        current.copy(position = current.position.copy(direction = elevatorStrategy.direction(current.destinationFloors, Waiting)))
+      //was waiting
+      case Position(floor, _, Waiting) =>
+        current.copy(position = current.position.copy(direction = elevatorStrategy.direction(current.destinationFloors, floor, Waiting)))
     }
   }
 }
