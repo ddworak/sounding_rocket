@@ -3,7 +3,12 @@ name := "sounding_rocket"
 version := "1.0"
 
 scalaVersion := "2.11.8"
-
+scalacOptions ++= Seq(
+  "-feature",
+  "-deprecation",
+  "-unchecked",
+  "-Xfatal-warnings"
+)
 cancelable in Global := true
 
 val Version = new {
