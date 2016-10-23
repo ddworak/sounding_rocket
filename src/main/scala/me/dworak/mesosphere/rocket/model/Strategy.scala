@@ -17,6 +17,7 @@ trait DirectionStrategy {
 trait ElevatorStrategy extends PickupStrategy with DirectionStrategy
 
 class SimpleElevatorStrategy(distanceMultiplier: Double, directionMultiplier: Double) extends ElevatorStrategy {
+
   override def direction(destinations: SortedSet[FloorId], current: FloorId, previous: Direction): Direction = {
     import Direction._
     val higher = destinations.from(current) - current //from has inclusive bound
@@ -28,14 +29,16 @@ class SimpleElevatorStrategy(distanceMultiplier: Double, directionMultiplier: Do
     }
     sameDirection.getOrElse {
       if (higher.size > lower.size) Up
+      else if (destinations.isEmpty) Waiting //todo sth smarter
       else Down
     }
-    //todo waiting?
   }
 
   override def assign(status: Map[ElevatorId, ElevatorStatus], sourceFloor: FloorId, up: Boolean): ElevatorId = {
+
     def distance(elevatorStatus: ElevatorStatus): Double =
       math.abs(elevatorStatus.position.floor.value - sourceFloor.value) * distanceMultiplier
+
     def direction(elevatorStatus: ElevatorStatus): Double =
       (elevatorStatus.position match {
         case Position(floor, _, Waiting) if floor == sourceFloor => -10
@@ -50,6 +53,7 @@ class SimpleElevatorStrategy(distanceMultiplier: Double, directionMultiplier: Do
       .values
       .groupBy(status => distance(status) + direction(status))
       .min(Ordering.by[(Double, Iterable[ElevatorStatus]), Double](_._1))
+
     mins.toSeq(Random.nextInt(mins.size)).elevatorId
   }
 }

@@ -1,34 +1,14 @@
 package me.dworak.mesosphere.rocket.model
 
-import me.dworak.mesosphere.rocket.model.Direction.Waiting
-import me.dworak.mesosphere.rocket.simulation.{ElevatorSimulation, TimeAssumption}
+import me.dworak.mesosphere.rocket.ElevatorsFixture
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.collection.{SortedSet, mutable}
+import scala.collection.mutable
 
 class SimpleElevatorStrategyTest extends FlatSpec with Matchers {
 
 
-  trait Fixture {
-    implicit val timeAssumption = new TimeAssumption {
-
-      override def ticksOpen: Ticks = Ticks(2)
-
-      override def ticksPerFloor: Ticks = Ticks(1)
-    }
-
-    implicit val strategy = new SimpleElevatorStrategy(1, 100)
-    val system = new ElevatorSimulation()
-    val initial = Seq(
-      ElevatorStatus(ElevatorId(0), Position(FloorId(0), Ticks(0), Waiting), SortedSet.empty),
-      ElevatorStatus(ElevatorId(1), Position(FloorId(0), Ticks(0), Waiting), SortedSet.empty),
-      ElevatorStatus(ElevatorId(2), Position(FloorId(0), Ticks(0), Waiting), SortedSet.empty)
-    )
-    initial.foreach(system.update)
-  }
-
-
-  "SimpleElevatorStrategy" should "pick a random elevator" in new Fixture {
+  "SimpleElevatorStrategy" should "pick a random elevator" in new ElevatorsFixture {
 
     import org.scalatest.concurrent.Eventually._
 

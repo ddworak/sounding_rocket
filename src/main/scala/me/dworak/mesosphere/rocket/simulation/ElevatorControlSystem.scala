@@ -6,7 +6,8 @@ import scala.collection.mutable
 
 //todo interface for a real system - this is a simulation interface
 trait ElevatorControlSystem {
-  def status: Map[ElevatorId, ElevatorStatus]
+
+  def status(): Map[ElevatorId, ElevatorStatus]
 
   def status(id: ElevatorId): Option[ElevatorStatus]
 
@@ -30,12 +31,12 @@ trait TimeAssumption {
   def ticksOpen: Ticks
 }
 
-class ElevatorSimulation(implicit timeAssumption: TimeAssumption, elevatorStrategy: ElevatorStrategy)
+class ElevatorSimulation(floors: Range)(implicit timeAssumption: TimeAssumption, elevatorStrategy: ElevatorStrategy)
   extends ElevatorControlSystem {
 
   private val elevatorStatus = mutable.Map.empty[ElevatorId, ElevatorStatus]
 
-  override def status: Map[ElevatorId, ElevatorStatus] = elevatorStatus.toMap
+  override def status(): Map[ElevatorId, ElevatorStatus] = elevatorStatus.toMap
 
   override def status(id: ElevatorId): Option[ElevatorStatus] = elevatorStatus.get(id)
 
@@ -49,14 +50,15 @@ class ElevatorSimulation(implicit timeAssumption: TimeAssumption, elevatorStrate
     selected
   }
 
-  override def step(): Unit = this.synchronized(elevatorStatus.mapValues(status => nextStatus(status)))
+  override def step(): Unit = this.synchronized(elevatorStatus.transform { case (id, status) => nextStatus(status) })
 
   private def nextStatus(current: ElevatorStatus)(implicit timeAssumption: TimeAssumption): ElevatorStatus = {
     import me.dworak.mesosphere.rocket.model.Direction._
 
     current.position match {
-      //reached a floor
-      case Position(floor, offset, direction@(Up | Down)) if offset + 1 == timeAssumption.ticksPerFloor =>
+      //reached a floor => open the door or just update position
+      case Position(floor, offset, direction@(Up | Down))
+        if offset + 1 == timeAssumption.ticksPerFloor && floors.contains((floor + direction.floorValueDifference).value) =>
         val leftDestinations = current.destinationFloors - floor
         val newFloor = floor + direction.floorValueDifference
         current.copy(
@@ -67,10 +69,13 @@ class ElevatorSimulation(implicit timeAssumption: TimeAssumption, elevatorStrate
           ),
           destinationFloors = leftDestinations
         )
+      //request from current floor => open the door
+      case Position(floor, Ticks(0), _) if current.destinationFloors.contains(floor) =>
+        current.copy(position = current.position.copy(floor, Ticks.Zero, Open), destinationFloors = current.destinationFloors - floor)
       //closed the door
       case Position(floor, offset, Open) if offset + 1 == timeAssumption.ticksOpen =>
         current.copy(position = current.position.copy(floor, Ticks.Zero, elevatorStrategy.direction(current.destinationFloors, floor, Open)))
-      //no state change - just time
+      //no state change => increment offset
       case Position(_, offset, Up | Down | Open) =>
         current.copy(position = current.position.copy(offset = offset + 1))
       //was waiting
