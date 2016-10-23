@@ -4,35 +4,23 @@ import me.dworak.mesosphere.rocket.model._
 
 import scala.collection.mutable
 
-//todo interface for a real system - this is a simulation interface
-trait ElevatorControlSystem {
-
-  def status(): Map[ElevatorId, ElevatorStatus]
-
-  def status(id: ElevatorId): Option[ElevatorStatus]
+trait ElevatorSimulationControlSystem extends ElevatorControlSystem {
 
   def update(status: ElevatorStatus): Unit
 
-  /**
-    * Pickup request.
-    *
-    * @param sourceFloor source floor
-    * @param up          true when destination is higher than source floor
-    * @return elevator handling the request
-    */
-  def pickup(sourceFloor: FloorId, up: Boolean): ElevatorId
-
   def step(): Unit
+
 }
 
 trait TimeAssumption {
+
   def ticksPerFloor: Ticks
 
   def ticksOpen: Ticks
 }
 
 class ElevatorSimulation(floors: Range)(implicit timeAssumption: TimeAssumption, elevatorStrategy: ElevatorStrategy)
-  extends ElevatorControlSystem {
+  extends ElevatorSimulationControlSystem {
 
   private val elevatorStatus = mutable.Map.empty[ElevatorId, ElevatorStatus]
 
