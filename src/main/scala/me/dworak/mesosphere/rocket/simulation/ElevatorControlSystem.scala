@@ -9,9 +9,9 @@ import scala.collection.mutable
 trait ElevatorControlSystem {
   def status: Map[ElevatorId, ElevatorStatus]
 
-  def status(elevatorId: ElevatorId): Option[ElevatorStatus]
+  def status(id: ElevatorId): Option[ElevatorStatus]
 
-  def update(elevatorState: ElevatorStatus): Unit
+  def update(status: ElevatorStatus): Unit
 
   /**
     * Pickup request.
@@ -48,9 +48,9 @@ class ElevatorSimulation(implicit timeAssumption: TimeAssumption, directionStrat
 
   override def status: Map[ElevatorId, ElevatorStatus] = elevatorStatus.toMap
 
-  override def status(elevatorId: ElevatorId): Option[ElevatorStatus] = elevatorStatus.get(elevatorId)
+  override def status(id: ElevatorId): Option[ElevatorStatus] = elevatorStatus.get(id)
 
-  override def update(elevatorState: ElevatorStatus): Unit = ???
+  override def update(status: ElevatorStatus): Unit = ???
 
   override def pickup(sourceFloor: FloorId, up: Boolean): ElevatorId = ???
 
