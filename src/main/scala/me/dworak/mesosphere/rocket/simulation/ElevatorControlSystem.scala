@@ -4,6 +4,7 @@ import me.dworak.mesosphere.rocket.model._
 
 import scala.collection.mutable
 
+//todo interface for a real system - this is a simulation interface
 trait ElevatorControlSystem {
   def status: Map[ElevatorId, ElevatorStatus]
 
