@@ -22,11 +22,6 @@ trait ElevatorControlSystem {
     */
   def pickup(sourceFloor: FloorId, up: Boolean): ElevatorId
 
-  /**
-    * Step is a two-stage operation:
-    * - apply any pending requests
-    * - time-step one tick forward
-    */
   def step(): Unit
 }
 
@@ -50,11 +45,17 @@ class ElevatorSimulation(implicit timeAssumption: TimeAssumption, directionStrat
 
   override def status(id: ElevatorId): Option[ElevatorStatus] = elevatorStatus.get(id)
 
-  override def update(status: ElevatorStatus): Unit = ???
+  override def update(status: ElevatorStatus): Unit = this.synchronized(elevatorStatus.put(status.elevatorId, status))
 
-  override def pickup(sourceFloor: FloorId, up: Boolean): ElevatorId = ???
+  override def pickup(sourceFloor: FloorId, up: Boolean): ElevatorId = this.synchronized {
+    //decide which elevator will handle the request
+    val selected = elevatorStatus.keys.head
+    val currentStatus = elevatorStatus(selected)
+    elevatorStatus.update(selected, currentStatus.copy(destinationFloors = currentStatus.destinationFloors + sourceFloor))
+    selected
+  }
 
-  override def step(): Unit = ???
+  override def step(): Unit = this.synchronized(elevatorStatus.mapValues(status => nextStatus(status)))
 
   private def nextStatus(current: ElevatorStatus)(implicit timeAssumption: TimeAssumption, directionStrategy: DirectionStrategy): ElevatorStatus = {
     import me.dworak.mesosphere.rocket.model.Direction._
