@@ -1,7 +1,7 @@
 package me.dworak.mesosphere.rocket.model
 
 import me.dworak.mesosphere.rocket.ElevatorFixture
-import me.dworak.mesosphere.rocket.model.Direction.{Up, Waiting}
+import me.dworak.mesosphere.rocket.model.Direction.{Open, Up, Waiting}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -44,6 +44,19 @@ class SimpleElevatorStrategyTest extends FlatSpec with Matchers with Eventually 
       status.destinationFloors shouldBe immutable.SortedSet.empty[FloorId]
       system.status(id).get.position.direction shouldBe Waiting
     }
+  }
+
+  it should "prefer waiting and open elevators" in new ElevatorFixture {
+    system.update(ElevatorStatus(ElevatorId(0), Position(FloorId(2), Ticks.Zero, Waiting), immutable.SortedSet.empty))
+    system.update(ElevatorStatus(ElevatorId(1), Position(FloorId(2), Ticks.Zero, Up), immutable.SortedSet(FloorId(3))))
+    system.update(ElevatorStatus(ElevatorId(2), Position(FloorId(2), Ticks.Zero, Open), immutable.SortedSet(FloorId(3))))
+
+    (0 to 1000).foreach { _ =>
+      val assigned = system.pickup(FloorId(2), true)
+      Seq(assigned) should contain oneOf(ElevatorId(0), ElevatorId(2))
+      assigned should not be ElevatorId(1)
+    }
+
   }
 
 

@@ -1,6 +1,6 @@
 package me.dworak.mesosphere.rocket.strategy
 
-import me.dworak.mesosphere.rocket.model.Direction.{Down, Up, Waiting}
+import me.dworak.mesosphere.rocket.model.Direction.{Down, Open, Up, Waiting}
 import me.dworak.mesosphere.rocket.model._
 
 import scala.collection.immutable.SortedSet
@@ -31,7 +31,7 @@ class SimpleElevatorStrategy(distanceMultiplier: Double, directionMultiplier: Do
 
     def direction(elevatorStatus: ElevatorStatus): Double =
       (elevatorStatus.position match {
-        case Position(floor, _, Waiting) if floor == sourceFloor => -10
+        case Position(floor, _, Waiting | Open) if floor == sourceFloor => -10
         case Position(floor, _, Up) if floor < sourceFloor => -1 + (if (up) -1 else 0)
         case Position(floor, _, Down) if floor > sourceFloor => -1 + (if (!up) -1 else 0)
         case Position(floor, _, Up) if floor > sourceFloor => 1
