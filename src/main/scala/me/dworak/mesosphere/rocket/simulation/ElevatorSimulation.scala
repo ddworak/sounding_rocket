@@ -2,6 +2,7 @@ package me.dworak.mesosphere.rocket.simulation
 
 import com.typesafe.scalalogging.LazyLogging
 import me.dworak.mesosphere.rocket.model._
+import me.dworak.mesosphere.rocket.strategy.ElevatorStrategy
 
 import scala.collection.mutable
 
@@ -31,7 +32,7 @@ class ElevatorSimulation(floors: Range)(implicit timeAssumption: TimeAssumption,
 
   override def pickup(sourceFloor: FloorId, up: Boolean): ElevatorId = this.synchronized {
     //decide which elevator will handle the request
-    val selected = elevatorStrategy.assign(status, sourceFloor, up)
+    val selected = elevatorStrategy.assign(status(), sourceFloor, up)
     val currentStatus = elevatorStatus(selected)
     elevatorStatus.update(selected, currentStatus.copy(destinationFloors = currentStatus.destinationFloors + sourceFloor))
     selected
@@ -45,6 +46,7 @@ class ElevatorSimulation(floors: Range)(implicit timeAssumption: TimeAssumption,
     current.position match {
       //handle out of range case on bad update
       case Position(floor, offset, direction@(Up | Down)) if !floors.contains(floor.value + direction.floorValueDifference) =>
+        logger.error(s"Invalid update caused out of range movement, will try to reset direction at ${current.elevatorId}")
         current.copy(position = current.position.copy(
           offset = Ticks.Zero,
           direction = elevatorStrategy.direction(current.destinationFloors, floor, Waiting)
@@ -70,7 +72,7 @@ class ElevatorSimulation(floors: Range)(implicit timeAssumption: TimeAssumption,
       //no state change => increment offset
       case Position(floor, offset, Up | Down | Open) =>
         current.copy(position = current.position.copy(offset = offset + 1))
-      //was waiting
+      //was waiting. starts moving
       case Position(floor, _, Waiting) =>
         current.copy(position = current.position.copy(direction = elevatorStrategy.direction(current.destinationFloors, floor, Waiting)))
     }

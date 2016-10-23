@@ -1,20 +1,10 @@
-package me.dworak.mesosphere.rocket.model
-
+package me.dworak.mesosphere.rocket.strategy
 
 import me.dworak.mesosphere.rocket.model.Direction.{Down, Up, Waiting}
+import me.dworak.mesosphere.rocket.model._
 
 import scala.collection.immutable.SortedSet
 import scala.util.Random
-
-trait PickupStrategy {
-  def assign(status: Map[ElevatorId, ElevatorStatus], sourceFloor: FloorId, up: Boolean): ElevatorId
-}
-
-trait DirectionStrategy {
-  def direction(destinations: SortedSet[FloorId], current: FloorId, previous: Direction): Direction
-}
-
-trait ElevatorStrategy extends PickupStrategy with DirectionStrategy
 
 class SimpleElevatorStrategy(distanceMultiplier: Double, directionMultiplier: Double) extends ElevatorStrategy {
 
@@ -29,7 +19,7 @@ class SimpleElevatorStrategy(distanceMultiplier: Double, directionMultiplier: Do
     }
     sameDirection.getOrElse {
       if (higher.size > lower.size) Up
-      else if (destinations.isEmpty) Waiting //todo sth smarter
+      else if (destinations.isEmpty) Waiting //todo sth smarter (positioning strategy)
       else Down
     }
   }

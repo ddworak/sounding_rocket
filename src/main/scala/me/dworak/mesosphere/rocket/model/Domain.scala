@@ -18,6 +18,7 @@ object Direction {
 
 case class Position(floor: FloorId, offset: Ticks, direction: Direction)
 
+//todo capacity
 case class ElevatorStatus(elevatorId: ElevatorId, position: Position, destinationFloors: immutable.SortedSet[FloorId])
 
 case class FloorId(value: Int) extends Ordered[FloorId] {
