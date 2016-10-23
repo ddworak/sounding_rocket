@@ -27,9 +27,9 @@ case class FloorId(value: Int) extends Ordered[FloorId] {
   override def compare(that: FloorId): Int = value.compare(that.value)
 }
 
-
 case class ElevatorId(value: Int) extends AnyVal
 
+//todo this should be part of simulation
 case class Ticks(value: Int) extends AnyVal {
   def +(offset: Int): Ticks = copy(value + offset)
 }

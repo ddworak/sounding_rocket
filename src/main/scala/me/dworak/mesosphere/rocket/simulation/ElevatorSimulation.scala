@@ -40,7 +40,7 @@ class ElevatorSimulation(floors: Range)(implicit timeAssumption: TimeAssumption,
 
   override def step(): Unit = this.synchronized(elevatorStatus.transform { case (id, status) => nextStatus(status) })
 
-  private def nextStatus(current: ElevatorStatus)(implicit timeAssumption: TimeAssumption): ElevatorStatus = {
+  private def nextStatus(current: ElevatorStatus): ElevatorStatus = {
     import me.dworak.mesosphere.rocket.model.Direction._
 
     current.position match {
