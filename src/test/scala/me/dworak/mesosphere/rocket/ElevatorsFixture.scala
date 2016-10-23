@@ -7,12 +7,7 @@ import me.dworak.mesosphere.rocket.simulation.{ElevatorSimulation, TimeAssumptio
 import scala.collection.SortedSet
 
 trait ElevatorsFixture {
-  implicit val timeAssumption = new TimeAssumption {
-
-    override def ticksOpen: Ticks = Ticks(2)
-
-    override def ticksPerFloor: Ticks = Ticks(1)
-  }
+  implicit val timeAssumption = TimeAssumption(Ticks(1), Ticks(2))
 
   implicit val strategy = new SimpleElevatorStrategy(1, 100)
   val system = new ElevatorSimulation(0 to 10)

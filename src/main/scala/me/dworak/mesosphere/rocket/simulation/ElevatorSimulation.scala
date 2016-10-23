@@ -1,5 +1,6 @@
 package me.dworak.mesosphere.rocket.simulation
 
+import com.typesafe.scalalogging.LazyLogging
 import me.dworak.mesosphere.rocket.model._
 
 import scala.collection.mutable
@@ -12,15 +13,13 @@ trait ElevatorSimulationControlSystem extends ElevatorControlSystem {
 
 }
 
-trait TimeAssumption {
-
-  def ticksPerFloor: Ticks
-
-  def ticksOpen: Ticks
+case class TimeAssumption(ticksPerFloor: Ticks, ticksOpen: Ticks) {
+  require(ticksPerFloor.value > 0 && ticksOpen.value > 0)
 }
 
 class ElevatorSimulation(floors: Range)(implicit timeAssumption: TimeAssumption, elevatorStrategy: ElevatorStrategy)
-  extends ElevatorSimulationControlSystem {
+  extends ElevatorSimulationControlSystem with LazyLogging {
+  require(floors.size > 1)
 
   private val elevatorStatus = mutable.Map.empty[ElevatorId, ElevatorStatus]
 
@@ -44,9 +43,14 @@ class ElevatorSimulation(floors: Range)(implicit timeAssumption: TimeAssumption,
     import me.dworak.mesosphere.rocket.model.Direction._
 
     current.position match {
-      //reached a floor => open the door or just update position
-      case Position(floor, offset, direction@(Up | Down))
-        if offset + 1 == timeAssumption.ticksPerFloor && floors.contains((floor + direction.floorValueDifference).value) =>
+      //handle out of range case on bad update
+      case Position(floor, offset, direction@(Up | Down)) if !floors.contains(floor.value + direction.floorValueDifference) =>
+        current.copy(position = current.position.copy(
+          offset = Ticks.Zero,
+          direction = elevatorStrategy.direction(current.destinationFloors, floor, Waiting)
+        ))
+      //reached a valid floor => open the door or just update position
+      case Position(floor, offset, direction@(Up | Down)) if offset + 1 == timeAssumption.ticksPerFloor =>
         val newFloor = floor + direction.floorValueDifference
         val leftDestinations = current.destinationFloors - newFloor
         current.copy(
@@ -64,7 +68,7 @@ class ElevatorSimulation(floors: Range)(implicit timeAssumption: TimeAssumption,
       case Position(floor, offset, Open) if offset + 1 == timeAssumption.ticksOpen =>
         current.copy(position = current.position.copy(floor, Ticks.Zero, elevatorStrategy.direction(current.destinationFloors, floor, Open)))
       //no state change => increment offset
-      case Position(_, offset, Up | Down | Open) =>
+      case Position(floor, offset, Up | Down | Open) =>
         current.copy(position = current.position.copy(offset = offset + 1))
       //was waiting
       case Position(floor, _, Waiting) =>

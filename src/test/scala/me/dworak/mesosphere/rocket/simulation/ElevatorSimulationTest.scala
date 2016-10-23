@@ -39,4 +39,25 @@ class ElevatorSimulationTest extends FlatSpec with Matchers {
     val perOpen = timeAssumption.ticksOpen.value
     i shouldBe 1 + perOpen + 2 * perFloor + perOpen + 3 * perFloor + perOpen + 5 * perFloor
   }
+
+  it should "handle invalid update graciously" in new ElevatorsFixture {
+    val outOfRangeDown = ElevatorStatus(ElevatorId(0), Position(FloorId(0), Ticks(0), Down), SortedSet(FloorId(2)))
+    system.update(outOfRangeDown)
+    var i = 0
+    while (system.status(outOfRangeDown.elevatorId).get.destinationFloors.nonEmpty) {
+      i += 1
+      system.step()
+    }
+    i shouldBe 1 + 2 * timeAssumption.ticksPerFloor.value
+
+
+    val outOfRangeUp = ElevatorStatus(ElevatorId(0), Position(FloorId(0), Ticks(0), Down), SortedSet(FloorId(2)))
+    system.update(outOfRangeUp)
+    i = 0
+    while (system.status(outOfRangeUp.elevatorId).get.destinationFloors.nonEmpty) {
+      i += 1
+      system.step()
+    }
+    i shouldBe 1 + 2 * timeAssumption.ticksPerFloor.value
+  }
 }
