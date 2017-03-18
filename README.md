@@ -1,6 +1,6 @@
-#Sounding Rocket
-######[the only way to get to mesosphere](https://en.wikipedia.org/wiki/Mesosphere#Uncertainties)
-##A simple (4-hour) elevator dispatching simulation
+# Sounding Rocket
+###### [the only way to get to mesosphere](https://en.wikipedia.org/wiki/Mesosphere#Uncertainties)
+## A simple (4-hour) elevator dispatching simulation
 
 ### The Problem
 Design and implement an elevator control system. 
